@@ -230,18 +230,52 @@ function login(name) {
     initMap();
 }
 
+let tempMarker = null;
 
+// Enable map clicks to choose coordinates
+function enableMapClickForLocation() {
+    map.addListener("click", (e) => {
+        placeTempMarker(e.latLng);
+    });
+}
+
+function placeTempMarker(latLng) {
+    // Remove old marker
+    if (tempMarker) tempMarker.setMap(null);
+
+    // Create new one
+    tempMarker = new google.maps.Marker({
+        position: latLng,
+        map: map,
+        draggable: true
+    });
+
+    // Fill the input boxes automatically
+    locLat.value = latLng.lat();
+    locLng.value = latLng.lng();
+
+    // Update input boxes while dragging
+    tempMarker.addListener("dragend", () => {
+        const pos = tempMarker.getPosition();
+        locLat.value = pos.lat();
+        locLng.value = pos.lng();
+    });
+}
 
 // ==================================
 // MAP + LOCATIONS
 // ==================================
-function initMap() {
-    map = new google.maps.Map(document.getElementById("map"), {
+async function initMap() {
+    const { Map } = await google.maps.importLibrary("maps");
+    const { Marker } = await google.maps.importLibrary("marker");
+
+    map = new Map(document.getElementById("map"), {
         zoom: 3,
         center: { lat: 20, lng: 0 }
     });
 
     loadMarkers();
+    enableMapClickForLocation();
 }
 
 function addLocation() {
@@ -252,9 +286,17 @@ function addLocation() {
     if (!name || isNaN(lat) || isNaN(lng))
         return alert("Enter valid location info.");
 
+    // Save to DB (local or online)
     db[currentGroup].locations.push({ name, lat, lng });
     saveDB();
 
+    // Clear temp marker
+    if (tempMarker) {
+        tempMarker.setMap(null);
+        tempMarker = null;
+    }
+
+    // Refresh UI
     loadLocations();
     loadMarkers();
 }
@@ -319,7 +361,35 @@ function loadMessages() {
 
 
 <!-- GOOGLE MAPS JS API (YOUR KEY) -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAxnbNQkFoVwkBY4mMvqddPKg3LPAOHjyg&callback=initMap" async defer></script>
+<script>
+    (g => {
+        let h, a, k,
+            p = "The Google Maps JavaScript API",
+            c = "google",
+            l = "importLibrary",
+            q = "__ib__",
+            m = document,
+            b = window;
+        b = b[c] || (b[c] = {});
+        const d = b.maps || (b.maps = {}), r = new Set, e = new URLSearchParams,
+            u = () => h || (h = new Promise(async(f, n) => {
+                await (a = m.createElement("script"));
+                e.set("libraries", [...r] + "");
+                for (k in g) e.set(k.replace(/[A-Z]/g, t => "_" + t[0].toLowerCase()), g[k]);
+                e.set("callback", c + ".maps." + q);
+                a.src = `https://maps.googleapis.com/maps/api/js?` + e;
+                d[q] = f;
+                a.onerror = () => n(Error(p + " could not load."));
+                m.head.append(a);
+            }));
+        d[l] ? console.warn(p + " only loads once. Ignoring.") :
+            d[l] = (f, ...n) => (r.add(f), u().then(() => d[l](f, ...n)));
+    })({
+        key: "AIzaSyAxnbNQkFoVwkBY4mMvqddPKg3LPAOHjyg",
+        v: "weekly"
+    });
+</script>
+
 
 </body>
 </html>
