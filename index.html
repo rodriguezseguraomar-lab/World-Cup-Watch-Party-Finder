@@ -230,9 +230,11 @@ function login(name) {
     initMap();
 }
 
+// ==========================
+// TEMP PIN / MAP CLICK SYSTEM
+// ==========================
 let tempMarker = null;
 
-// Enable map clicks to choose coordinates
 function enableMapClickForLocation() {
     map.addListener("click", (e) => {
         placeTempMarker(e.latLng);
@@ -240,21 +242,22 @@ function enableMapClickForLocation() {
 }
 
 function placeTempMarker(latLng) {
-    // Remove old marker
+    // Remove old temp marker
     if (tempMarker) tempMarker.setMap(null);
 
-    // Create new one
+    // Create new temp marker
     tempMarker = new google.maps.Marker({
         position: latLng,
         map: map,
-        draggable: true
+        draggable: true,
+        title: "Temporary Pin (drag to adjust)"
     });
 
-    // Fill the input boxes automatically
+    // Auto-fill the latitude & longitude inputs
     locLat.value = latLng.lat();
     locLng.value = latLng.lng();
 
-    // Update input boxes while dragging
+    // Update inputs while dragging
     tempMarker.addListener("dragend", () => {
         const pos = tempMarker.getPosition();
         locLat.value = pos.lat();
@@ -283,22 +286,27 @@ function addLocation() {
     const lat = parseFloat(locLat.value);
     const lng = parseFloat(locLng.value);
 
-    if (!name || isNaN(lat) || isNaN(lng))
-        return alert("Enter valid location info.");
+    if (!name) return alert("Enter a location name.");
+    if (isNaN(lat) || isNaN(lng)) return alert("Enter valid coordinates.");
 
-    // Save to DB (local or online)
+    // Save to DB
     db[currentGroup].locations.push({ name, lat, lng });
     saveDB();
 
-    // Clear temp marker
+    // Remove temp marker
     if (tempMarker) {
         tempMarker.setMap(null);
         tempMarker = null;
     }
 
-    // Refresh UI
-    loadLocations();
+    // Clear input fields
+    locName.value = "";
+    locLat.value = "";
+    locLng.value = "";
+
+    // Reload markers & sidebar
     loadMarkers();
+    loadLocations();
 }
 
 function loadLocations() {
