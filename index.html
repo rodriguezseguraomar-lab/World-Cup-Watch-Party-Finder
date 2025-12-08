@@ -14,16 +14,57 @@
             overflow: hidden;
         }
 
+        /* Login Screen */
         #loginScreen {
             width: 100%;
-            padding: 40px;
+            min-height: 100vh;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(135deg, #0b5ed7, #1e88e5);
+            color: #fff;
         }
 
-            #loginScreen input, #loginScreen button {
-                width: 300px;
-                padding: 10px;
+            #loginScreen h2 {
+                font-size: 2rem;
+                margin-bottom: 0.5rem;
+            }
+
+            #loginScreen p {
+                font-size: 1rem;
+                margin-bottom: 1.5rem;
+            }
+
+            #loginScreen input,
+            #loginScreen button {
+                width: 320px;
+                max-width: 100%;
+                padding: 12px 14px;
                 margin-top: 10px;
                 display: block;
+                border-radius: 8px;
+                font-size: 1rem;
+            }
+
+            #loginScreen button {
+                background: #ffffff;
+                color: #0b5ed7;
+                border: none;
+                font-weight: 600;
+                cursor: pointer;
+            }
+
+                #loginScreen button:hover {
+                    background: #e3f2fd;
+                }
+
+            #loginScreen h3 {
+                margin-top: 1.5rem;
+                margin-bottom: 0.5rem;
+                color: #fff;
             }
 
         #appScreen {
@@ -86,7 +127,8 @@
                 cursor: pointer;
             }
 
-        #add-location input, #add-location button {
+        #add-location input,
+        #add-location button {
             width: 90%;
             padding: 8px;
             margin: 5px auto;
@@ -138,6 +180,7 @@
                 </div>
             </div>
         </div>
+
         <div id="map"></div>
     </div>
 
@@ -166,9 +209,18 @@
         let currentGroup = null, map, markers = [], tempMarker = null;
         let db = {};
 
-        function showJoin() { joinGroupDiv.style.display = "block"; createGroupDiv.style.display = "none"; }
-        function showCreate() { createGroupDiv.style.display = "block"; joinGroupDiv.style.display = "none"; }
+        // BUTTON FUNCTIONS
+        function showJoin() {
+            document.getElementById("joinGroup").style.display = "block";
+            document.getElementById("createGroup").style.display = "none";
+        }
 
+        function showCreate() {
+            document.getElementById("createGroup").style.display = "block";
+            document.getElementById("joinGroup").style.display = "none";
+        }
+
+        // DATABASE FUNCTIONS
         function saveGroup() { return cloudDB.ref("groups/" + currentGroup).set(db[currentGroup]); }
 
         function loadGroup(name, cb) {
@@ -181,10 +233,13 @@
         function listenForLiveUpdates(name) {
             cloudDB.ref("groups/" + name).on("value", snap => {
                 db[name] = snap.val();
-                loadLocations(); loadMessages(); loadMarkers();
+                loadLocations();
+                loadMessages();
+                loadMarkers();
             });
         }
 
+        // AUTH
         function createGroup() {
             let n = newName.value.trim(), p = newPass.value.trim();
             if (!n || !p) return alert("Fill fields");
@@ -215,6 +270,7 @@
             });
         }
 
+        // MAP
         async function initMap() {
             const { Map } = await google.maps.importLibrary("maps");
             map = new Map(document.getElementById("map"), { zoom: 3, center: { lat: 20, lng: 0 } });
@@ -225,23 +281,28 @@
         function placeTempMarker(latLng) {
             if (tempMarker) tempMarker.setMap(null);
             tempMarker = new google.maps.Marker({ position: latLng, map, draggable: true });
-            locLat.value = latLng.lat(); locLng.value = latLng.lng();
+            locLat.value = latLng.lat();
+            locLng.value = latLng.lng();
             tempMarker.addListener("dragend", () => {
                 let p = tempMarker.getPosition();
-                locLat.value = p.lat(); locLng.value = p.lng();
+                locLat.value = p.lat();
+                locLng.value = p.lng();
             });
         }
 
+        // DATA
         function addLocation() {
             let n = locName.value.trim(), lat = +locLat.value, lng = +locLng.value;
-            if (!n || isNaN(lat) || isNaN(lng)) return alert("Invalid data");
+            if (!n || isNaN(lat) || isNaN(lng)) return alert("Invalid input");
             db[currentGroup].locations.push({ name: n, lat, lng });
             saveGroup();
             locName.value = locLat.value = locLng.value = "";
             if (tempMarker) { tempMarker.setMap(null); tempMarker = null; }
-            loadLocations(); loadMarkers();
+            loadLocations();
+            loadMarkers();
         }
 
+        // UI
         function loadLocations() {
             points.innerHTML = "";
             db[currentGroup]?.locations?.forEach(l => {
@@ -252,22 +313,32 @@
         }
 
         function loadMarkers() {
-            markers.forEach(m => m.setMap(null)); markers = [];
+            markers.forEach(m => m.setMap(null));
+            markers = [];
             db[currentGroup]?.locations?.forEach(l => {
-                markers.push(new google.maps.Marker({ position: { lat: l.lat, lng: l.lng }, map, title: l.name }));
+                markers.push(new google.maps.Marker({
+                    position: { lat: l.lat, lng: l.lng },
+                    map: map,
+                    title: l.name
+                }));
             });
         }
 
+        // CHAT
         function sendMessage() {
-            let msg = msgBox.value.trim(); if (!msg) return;
-            db[currentGroup].messages.push(msg); saveGroup();
-            msgBox.value = ""; loadMessages();
+            let msg = msgBox.value.trim();
+            if (!msg) return;
+            db[currentGroup].messages.push(msg);
+            saveGroup();
+            msgBox.value = "";
+            loadMessages();
         }
 
         function loadMessages() {
             messages.innerHTML = "";
             db[currentGroup]?.messages?.forEach(m => {
-                let d = document.createElement("div"); d.textContent = m;
+                let d = document.createElement("div");
+                d.textContent = m;
                 messages.appendChild(d);
             });
             messages.scrollTop = messages.scrollHeight;
