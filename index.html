@@ -335,40 +335,40 @@
     const msgs = db[currentGroup]?.messages || [];
 
     msgs.forEach(m => {
-    let text = "";
-    let time = "";
+        let text = "";
+        let time = "";
 
-    if (typeof m === "string") {
-        text = m;
-    } else {
-        text = m.text;
-        time = m.time ? new Date(m.time).toLocaleString() : "";
-    }
+        if (typeof m === "string") {
+            text = m;
+        } else {
+            text = m.text;
+            time = m.time ? new Date(m.time).toLocaleString() : "";
+        }
 
-    const d = document.createElement('div');
-    d.innerHTML = `<div class="msg-meta">${time}</div><div>${escapeHtml(text)}</div>`;
-    d.style.padding = '6px 4px';
-    d.style.borderBottom = '1px solid #eee';
-    out.appendChild(d);
+        const d = document.createElement('div');
+        d.innerHTML = `<div class="msg-meta">${time}</div><div>${escapeHtml(text)}</div>`;
+        d.style.padding = '6px 4px';
+        d.style.borderBottom = '1px solid #eee';
+        out.appendChild(d);
     });
-
 
     out.scrollTop = out.scrollHeight;
 }
 
-    function sendMessage() {
-      let txt = msgBox.value.trim();
-      if (!txt) return;
+        function sendMessage() {
+    let txt = msgBox.value.trim();
+    if (!txt) return;
 
-      db[currentGroup].messages.push({
+    db[currentGroup].messages.push({
         text: txt,
         time: Date.now()
-      });
+    });
 
-      saveGroup();
+    saveGroup();
+    msgBox.value = "";
+}
 
-      msgBox.value = "";
-    }
+
 
     // small utility
     function escapeHtml(s){
