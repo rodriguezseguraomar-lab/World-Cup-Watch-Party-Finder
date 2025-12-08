@@ -221,7 +221,9 @@
         }
 
         // DATABASE FUNCTIONS
-        function saveGroup() { return cloudDB.ref("groups/" + currentGroup).set(db[currentGroup]); }
+        function saveGroup() {
+    return cloudDB.ref("groups/" + currentGroup).update(db[currentGroup]);
+}
 
         function loadGroup(name, cb) {
   cloudDB.ref("groups/" + name).once("value").then(s => {
@@ -234,14 +236,17 @@
   });
 }
 
-        function listenForLiveUpdates(name) {
-            cloudDB.ref("groups/" + name).on("value", snap => {
-                db[name] = snap.val();
-                loadLocations();
-                loadMessages();
-                loadMarkers();
-            });
-        }
+        cloudDB.ref("groups/" + name).on("value", snap => {
+    const newData = snap.val() || {};
+
+    db[name].password = newData.password || db[name].password;
+    db[name].locations = newData.locations || [];
+    db[name].messages = newData.messages || [];
+
+    loadLocations();
+    loadMessages();
+    loadMarkers();
+});
 
         // AUTH
         function createGroup() {
@@ -296,15 +301,19 @@
 
         // DATA
         function addLocation() {
-            let n = locName.value.trim(), lat = +locLat.value, lng = +locLng.value;
-            if (!n || isNaN(lat) || isNaN(lng)) return alert("Invalid input");
-            db[currentGroup].locations.push({ name: n, lat, lng });
-            saveGroup();
-            locName.value = locLat.value = locLng.value = "";
-            if (tempMarker) { tempMarker.setMap(null); tempMarker = null; }
-            loadLocations();
-            loadMarkers();
-        }
+    let n = locName.value.trim();
+    let lat = +locLat.value;
+    let lng = +locLng.value;
+
+    if (!n || isNaN(lat) || isNaN(lng)) return alert("Invalid input");
+
+    if (!db[currentGroup].locations)
+        db[currentGroup].locations = [];
+
+    db[currentGroup].locations.push({ name: n, lat, lng });
+
+    saveGroup();
+}
 
         // UI
         function loadLocations() {
@@ -358,6 +367,9 @@
         function sendMessage() {
     let txt = msgBox.value.trim();
     if (!txt) return;
+
+    if (!db[currentGroup].messages)
+        db[currentGroup].messages = [];
 
     db[currentGroup].messages.push({
         text: txt,
