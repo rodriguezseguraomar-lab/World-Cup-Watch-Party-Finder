@@ -347,23 +347,33 @@
 
     <!-- GOOGLE MAPS -->
     <script>
-        (g => {
-            let h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary", q = "__ib__", m = document, b = window;
-            b = b[c] || (b[c] = {});
-            const d = b.maps || (b.maps = {}), r = new Set, e = new URLSearchParams;
-            const u = () => h || (h = new Promise(async (f, n) => {
+    (g => {
+        let h, a, k,
+            p = "The Google Maps JavaScript API",
+            c = "google",
+            l = "importLibrary",
+            q = "__ib__",
+            m = document,
+            b = window;
+        b = b[c] || (b[c] = {});
+        const d = b.maps || (b.maps = {}), r = new Set, e = new URLSearchParams,
+            u = () => h || (h = new Promise(async (f, n) => {
                 await (a = m.createElement("script"));
                 e.set("libraries", [...r] + "");
                 for (k in g) e.set(k.replace(/[A-Z]/g, t => "_" + t[0].toLowerCase()), g[k]);
                 e.set("callback", c + ".maps." + q);
                 a.src = `https://maps.googleapis.com/maps/api/js?` + e;
-                d[q] = f; a.onerror = () => n(Error(p + " could not load."));
+                d[q] = f;
+                a.onerror = () => n(Error(p + " could not load."));
                 m.head.append(a);
             }));
-            d[l] ? console.warn(p + " only loads once. Ignoring.") :
-                d[l] = (f, ...n) => (r.add(f), u().then(() => d[l](f, ...n)));
-        })({ key: "YOUR_GOOGLE_MAPS_KEY", v: "weekly" });
-    </script>
+        d[l] ? console.warn(p + " only loads once. Ignoring.") :
+            d[l] = (f, ...n) => (r.add(f), u().then(() => d[l](f, ...n)));
+    })({
+        key: "AIzaSyAxnbNQkFoVwkBY4mMvqddPKg3LPAOHjyg",
+        v: "weekly"
+    });
+</script>
 
 </body>
 </html>
