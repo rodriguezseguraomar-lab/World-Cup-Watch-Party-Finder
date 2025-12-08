@@ -358,7 +358,7 @@
         }
 
         // CHAT
-        function loadMessages() {
+       function loadMessages() {
     const out = document.getElementById("messages");
     out.innerHTML = '';
     const msgs = db[currentGroup]?.messages || [];
@@ -382,9 +382,10 @@
     });
 
     out.scrollTop = out.scrollHeight;
-}
+}  // <— THIS WAS THE MISSING BRACE!!!
 
-        function sendMessage() {
+
+function sendMessage() {
     let txt = msgBox.value.trim();
     if (!txt) return;
 
@@ -400,13 +401,17 @@
     msgBox.value = "";
 }
 
-
-
-    // small utility
-    function escapeHtml(s){
-      if (s == null) return '';
-      return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; });
-    }
+// small utility
+function escapeHtml(s){
+    if (s == null) return '';
+    return String(s).replace(/[&<>"']/g, c => ({
+        '&':'&amp;',
+        '<':'&lt;',
+        '>':'&gt;',
+        '"':'&quot;',
+        "'":'&#39;'
+    })[c]);
+}
 
     // Helpful: allow safe reload in dev (clear listeners)
     window.onbeforeunload = () => {
