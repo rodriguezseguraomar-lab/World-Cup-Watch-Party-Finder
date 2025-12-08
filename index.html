@@ -1,94 +1,325 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>World Cup Watch Party Finder</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-    }
-    #sidebar {
-      width: 300px;
-      background: #f7f7f7;
-      border-right: 1px solid #ddd;
-      display: flex;
-      flex-direction: column;
-    }
-    #map {
-      flex: 1;
-    }
-    #points {
-      flex: 1;
-      overflow-y: auto;
-      padding: 10px;
-      border-bottom: 1px solid #ddd;
-    }
-    #chat {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-    #messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 10px;
-    }
-    #chat-input {
-      display: flex;
-      border-top: 1px solid #ddd;
-    }
-    #chat-input input {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      outline: none;
-    }
-    #chat-input button {
-      padding: 10px;
-      border: none;
-      background: #2196f3;
-      color: white;
-      cursor: pointer;
-    }
-  </style>
-</head>
-<body>
-  <div id="sidebar">
-    <h3 style="margin: 10px;">Group Points</h3>
-    <div id="points"></div>
-    <h3 style="margin: 10px;">Group Chat</h3>
-    <div id="chat">
-      <div id="messages"></div>
-      <div id="chat-input">
-        <input id="msgBox" type="text" placeholder="Type message..." />
-        <button onclick="sendMessage()">Send</button>
-      </div>
-    </div>
-  </div>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Group Location Map + Chat</title>
 
-  <div id="map">
-  <img id="staticMap" src="" style="width:100%; height:100%; object-fit:cover;" />
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    /* Login Screen */
+    #loginScreen {
+        width: 100%;
+        padding: 40px;
+        display: none;
+    }
+
+    #loginScreen input, #loginScreen button {
+        width: 300px;
+        padding: 10px;
+        margin-top: 10px;
+        display: block;
+    }
+
+    /* Main App Layout */
+    #appScreen {
+        display: none;
+        width: 100%;
+        height: 100%;
+    }
+
+    #sidebar {
+        width: 300px;
+        background: #f7f7f7;
+        border-right: 1px solid #ddd;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+    }
+
+    #map {
+        flex: 1;
+    }
+
+    #points {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    #chat {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 10px;
+    }
+
+    #messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+        background: white;
+        border: 1px solid #ccc;
+        margin-bottom: 10px;
+    }
+
+    #chat-input {
+        display: flex;
+    }
+
+    #chat-input input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ccc;
+    }
+
+    #chat-input button {
+        padding: 10px;
+        border: none;
+        background: #2196f3;
+        color: white;
+        cursor: pointer;
+    }
+
+    #add-location input, #add-location button {
+        width: 90%;
+        padding: 8px;
+        margin: 5px auto;
+        display: block;
+    }
+</style>
+</head>
+
+<body>
+
+<!-- ============================ -->
+<!-- LOGIN SCREEN -->
+<!-- ============================ -->
+<div id="loginScreen">
+    <h2>Group Login</h2>
+    <p>Are you joining an existing group?</p>
+
+    <button onclick="showJoin()">Yes, join group</button>
+    <button onclick="showCreate()">No, create new group</button>
+
+    <div id="joinGroup" style="display:none;">
+        <h3>Join Group</h3>
+        <input id="joinName" placeholder="Group Name">
+        <input id="joinPass" type="password" placeholder="Password">
+        <button onclick="joinGroup()">Enter Group</button>
+    </div>
+
+    <div id="createGroup" style="display:none;">
+        <h3>Create Group</h3>
+        <input id="newName" placeholder="New Group Name">
+        <input id="newPass" type="password" placeholder="New Password">
+        <button onclick="createGroup()">Create</button>
+    </div>
 </div>
 
-<script>
-  function loadStaticMap(lat = 40.7128, lng = -74.0060) {
-    const apiKey = "AIzaSyAxnbNQkFoVwkBY4mMvqddPKg3LPAOHjyg";
-    const url = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=12&size=800x600&maptype=roadmap&markers=color:red|${lat},${lng}&key=${apiKey}`;
-    document.getElementById("staticMap").src = url;
-  }
 
-  // Load default static map on load
-  window.onload = () => {
-    loadStaticMap();
-  };
+
+<!-- ============================ -->
+<!-- MAIN APP -->
+<!-- ============================ -->
+<div id="appScreen">
+
+    <div id="sidebar">
+
+        <h3 style="margin:10px;" id="groupTitle"></h3>
+
+        <!-- Add Locations -->
+        <div id="add-location">
+            <h3 style="margin-left:10px;">Add Location</h3>
+            <input id="locName" placeholder="Location Name">
+            <input id="locLat" placeholder="Latitude">
+            <input id="locLng" placeholder="Longitude">
+            <button onclick="addLocation()">Add Location</button>
+        </div>
+
+        <!-- Points List -->
+        <h3 style="margin:10px;">Group Points</h3>
+        <div id="points"></div>
+
+        <!-- Group Chat -->
+        <h3 style="margin:10px;">Group Chat</h3>
+        <div id="chat">
+            <div id="messages"></div>
+            <div id="chat-input">
+                <input id="msgBox" type="text" placeholder="Type message..." 
+                       onkeypress="if(event.key==='Enter') sendMessage()">
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+</div>
+
+
+
+<script>
+// ==================================
+// DATABASE (localStorage-based)
+// ==================================
+let currentGroup = null;
+let map;
+let markers = [];
+
+let db = JSON.parse(localStorage.getItem("groupDB") || "{}");
+
+function saveDB() {
+    localStorage.setItem("groupDB", JSON.stringify(db));
+}
+
+
+
+// ==================================
+// LOGIN SYSTEM
+// ==================================
+function showJoin() {
+    document.getElementById("joinGroup").style.display = "block";
+    document.getElementById("createGroup").style.display = "none";
+}
+
+function showCreate() {
+    document.getElementById("createGroup").style.display = "block";
+    document.getElementById("joinGroup").style.display = "none";
+}
+
+function createGroup() {
+    const name = newName.value.trim();
+    const pass = newPass.value.trim();
+
+    if (!name || !pass) return alert("Enter all fields.");
+    if (db[name]) return alert("Group already exists.");
+
+    db[name] = { password: pass, locations: [], messages: [] };
+    saveDB();
+    login(name);
+}
+
+function joinGroup() {
+    const name = joinName.value.trim();
+    const pass = joinPass.value.trim();
+
+    if (!db[name]) return alert("Group not found.");
+    if (db[name].password !== pass) return alert("Wrong password.");
+
+    login(name);
+}
+
+function login(name) {
+    currentGroup = name;
+
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("appScreen").style.display = "flex";
+    groupTitle.textContent = "Group: " + name;
+
+    loadLocations();
+    loadMessages();
+    initMap();
+}
+
+
+
+// ==================================
+// MAP + LOCATIONS
+// ==================================
+function initMap() {
+    map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 3,
+        center: { lat: 20, lng: 0 }
+    });
+
+    loadMarkers();
+}
+
+function addLocation() {
+    const name = locName.value.trim();
+    const lat = parseFloat(locLat.value);
+    const lng = parseFloat(locLng.value);
+
+    if (!name || isNaN(lat) || isNaN(lng))
+        return alert("Enter valid location info.");
+
+    db[currentGroup].locations.push({ name, lat, lng });
+    saveDB();
+
+    loadLocations();
+    loadMarkers();
+}
+
+function loadLocations() {
+    const container = document.getElementById("points");
+    container.innerHTML = "";
+
+    db[currentGroup].locations.forEach((loc) => {
+        const div = document.createElement("div");
+        div.innerHTML = `<b>${loc.name}</b><br>(${loc.lat}, ${loc.lng})<hr>`;
+        container.appendChild(div);
+    });
+}
+
+function loadMarkers() {
+    markers.forEach(m => m.setMap(null));
+    markers = [];
+
+    db[currentGroup].locations.forEach(loc => {
+        markers.push(new google.maps.Marker({
+            position: { lat: loc.lat, lng: loc.lng },
+            title: loc.name,
+            map: map
+        }));
+    });
+
+    if (markers.length)
+        map.setCenter(markers[markers.length - 1].getPosition());
+}
+
+
+
+// ==================================
+// CHAT SYSTEM
+// ==================================
+function sendMessage() {
+    const msg = msgBox.value.trim();
+    if (!msg) return;
+
+    db[currentGroup].messages.push(msg);
+    saveDB();
+
+    msgBox.value = "";
+    loadMessages();
+}
+
+function loadMessages() {
+    const container = document.getElementById("messages");
+    container.innerHTML = "";
+
+    db[currentGroup].messages.forEach(msg => {
+        const div = document.createElement("div");
+        div.textContent = msg;
+        container.appendChild(div);
+    });
+
+    container.scrollTop = container.scrollHeight;
+}
 </script>
 
-<!-- Static Maps API does NOT require script loading -->
+
+
+<!-- GOOGLE MAPS JS API (YOUR KEY) -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAxnbNQkFoVwkBY4mMvqddPKg3LPAOHjyg&callback=initMap" async defer></script>
 
 </body>
 </html>
