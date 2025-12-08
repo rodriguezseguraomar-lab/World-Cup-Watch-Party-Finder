@@ -138,11 +138,11 @@
 </head>
 
 <body>
-
+    <!-- LOGIN SCREEN -->
     <div id="loginScreen">
         <h2>Group Login</h2>
-        <button onclick="showJoin()">Yes, join group</button>
-        <button onclick="showCreate()">No, create new group</button>
+        <button onclick="showJoin()">Join Group</button>
+        <button onclick="showCreate()">Create Group</button>
 
         <div id="joinGroup" style="display:none;">
             <input id="joinName" placeholder="Group Name">
@@ -157,6 +157,7 @@
         </div>
     </div>
 
+    <!-- APP SCREEN -->
     <div id="appScreen">
         <div id="sidebar">
             <h3 id="groupTitle" style="margin:10px;"></h3>
@@ -190,7 +191,6 @@
 
     <script>
         // ===== FIREBASE CONFIG =====
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 
         const firebaseConfig = {
             apiKey: "AIzaSyB5prj_6ldVN8CBtu3L8FN-rbKYleJK_Fg",
@@ -206,7 +206,8 @@
         const cloudDB = firebase.database();
 
         // ===== APP =====
-        let currentGroup = null, map, markers = [], tempMarker = null;
+        let currentGroup = null;
+        let map, markers = [], tempMarker = null;
         let db = {};
 
         // BUTTON FUNCTIONS
@@ -220,45 +221,56 @@
             document.getElementById("joinGroup").style.display = "none";
         }
 
-        // DATABASE FUNCTIONS
+        // SAVE GROUP (UPDATED)
         function saveGroup() {
-    return cloudDB.ref("groups/" + currentGroup).update(db[currentGroup]);
-}
+            return cloudDB.ref("groups/" + currentGroup).update({
+                locations: db[currentGroup].locations || [],
+                messages: db[currentGroup].messages || []
+            });
+        }
 
+        // LOAD GROUP
         function loadGroup(name, cb) {
-  cloudDB.ref("groups/" + name).once("value").then(s => {
-    let g = s.val() || {};
-    if (!g.password) g.password = "";
-    if (!Array.isArray(g.locations)) g.locations = [];
-    if (!Array.isArray(g.messages)) g.messages = [];
-    db[name] = g;
-    cb();
-  });
-}
+            cloudDB.ref("groups/" + name).once("value").then(s => {
+                let g = s.val() || {};
+                if (!g.password) g.password = "";
+                if (!Array.isArray(g.locations)) g.locations = [];
+                if (!Array.isArray(g.messages)) g.messages = [];
+                db[name] = g;
+                cb();
+            });
+        }
 
-        cloudDB.ref("groups/" + name).on("value", snap => {
-    const newData = snap.val() || {};
+        // REALTIME LISTENER (UPDATED)
+        function listenForLiveUpdates(name) {
+            cloudDB.ref("groups/" + name).on("value", snap => {
+                const data = snap.val() || {};
 
-    db[name].password = newData.password || db[name].password;
-    db[name].locations = newData.locations || [];
-    db[name].messages = newData.messages || [];
+                db[name].password = data.password || db[name].password;
+                db[name].locations = data.locations || [];
+                db[name].messages = data.messages || [];
 
-    loadLocations();
-    loadMessages();
-    loadMarkers();
-});
+                loadLocations();
+                loadMessages();
+                loadMarkers();
+            });
+        }
 
-        // AUTH
+        // CREATE GROUP
         function createGroup() {
             let n = newName.value.trim(), p = newPass.value.trim();
             if (!n || !p) return alert("Fill fields");
+
             db[n] = { password: p, locations: [], messages: [] };
             currentGroup = n;
-            saveGroup().then(() => login(n));
+
+            cloudDB.ref("groups/" + n).set(db[n]).then(() => login(n));
         }
 
+        // JOIN GROUP
         function joinGroup() {
             let n = joinName.value.trim(), p = joinPass.value.trim();
+
             loadGroup(n, () => {
                 if (!db[n].password) return alert("Group not found");
                 if (db[n].password !== p) return alert("Wrong password");
@@ -266,13 +278,15 @@
             });
         }
 
+        // LOGIN
         function login(n) {
             currentGroup = n;
             loginScreen.style.display = "none";
             appScreen.style.display = "flex";
             groupTitle.textContent = "Group: " + n;
+
+            initMap();
             loadGroup(n, () => {
-                initMap();
                 loadLocations();
                 loadMessages();
                 listenForLiveUpdates(n);
@@ -283,7 +297,7 @@
         async function initMap() {
             const { Map } = await google.maps.importLibrary("maps");
             map = new Map(document.getElementById("map"), { zoom: 3, center: { lat: 20, lng: 0 } });
-            loadMarkers();
+
             map.addListener("click", e => placeTempMarker(e.latLng));
         }
 
@@ -292,6 +306,7 @@
             tempMarker = new google.maps.Marker({ position: latLng, map, draggable: true });
             locLat.value = latLng.lat();
             locLng.value = latLng.lng();
+
             tempMarker.addListener("dragend", () => {
                 let p = tempMarker.getPosition();
                 locLat.value = p.lat();
@@ -301,26 +316,32 @@
 
         // DATA
         function addLocation() {
-    let n = locName.value.trim();
-    let lat = +locLat.value;
-    let lng = +locLng.value;
+            let n = locName.value.trim();
+            let lat = +locLat.value;
+            let lng = +locLng.value;
 
-    if (!n || isNaN(lat) || isNaN(lng)) return alert("Invalid input");
+            if (!n || isNaN(lat) || isNaN(lng)) return alert("Invalid input");
 
-    if (!db[currentGroup].locations)
-        db[currentGroup].locations = [];
+            if (!db[currentGroup].locations)
+                db[currentGroup].locations = [];
 
-    db[currentGroup].locations.push({ name: n, lat, lng });
+            db[currentGroup].locations.push({ name: n, lat, lng });
+            saveGroup();
 
-    saveGroup();
+            // Clear UI
+            locName.value = "";
+            locLat.value = "";
+            locLng.value = "";
+            if (tempMarker) { tempMarker.setMap(null); tempMarker = null; }
+        }
 }
 
         // UI
         function loadLocations() {
             points.innerHTML = "";
-            db[currentGroup]?.locations?.forEach(l => {
+            db[currentGroup].locations.forEach(l => {
                 let d = document.createElement("div");
-                d.innerHTML = `<b>${l.name}</b><br>(${l.lat},${l.lng})<hr>`;
+                d.innerHTML = `<b>${l.name}</b><br>(${l.lat}, ${l.lng})<hr>`;
                 points.appendChild(d);
             });
         }
