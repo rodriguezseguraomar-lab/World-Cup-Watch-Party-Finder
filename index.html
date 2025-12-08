@@ -15,18 +15,62 @@
     }
 
     /* Login Screen */
-    #loginScreen {
+    #/* Login Screen */
+#loginScreen {
     width: 100%;
-    padding: 40px;
-    display: block; /* FIXED */
+    min-height: 100vh;              /* fill the screen height */
+    padding: 40px 20px;
+    display: flex;                   /* center everything inside */
+    flex-direction: column;
+    justify-content: center;         /* vertical center */
+    align-items: center;             /* horizontal center */
+    text-align: center;
+    background: linear-gradient(135deg, #0b5ed7, #1e88e5);
+    color: #fff;
 }
 
-    #loginScreen input, #loginScreen button {
-        width: 300px;
-        padding: 10px;
-        margin-top: 10px;
-        display: block;
-    }
+/* Title + subtitle */
+#loginScreen h2 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+#loginScreen p {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Inputs and buttons */
+#loginScreen input,
+#loginScreen button {
+    width: 320px;
+    max-width: 100%;
+    padding: 12px 14px;
+    margin-top: 10px;
+    display: block;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+/* Buttons styling */
+#loginScreen button {
+    background: #ffffff;
+    color: #0b5ed7;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+#loginScreen button:hover {
+    background: #e3f2fd;
+}
+
+/* Subheadings for join/create sections */
+#loginScreen h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: #fff;
+}
 
     /* Main App Layout */
     #appScreen {
