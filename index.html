@@ -358,7 +358,7 @@
         }
 
         // CHAT
-       function loadMessages() {
+        function loadMessages() {
     const out = document.getElementById("messages");
     out.innerHTML = '';
     const msgs = db[currentGroup]?.messages || [];
@@ -400,6 +400,7 @@ function sendMessage() {
     saveGroup();
     msgBox.value = "";
 }
+
 
 // small utility
 function escapeHtml(s){
