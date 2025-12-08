@@ -329,22 +329,20 @@
         }
 
         // CHAT
-    function loadMessages() {
-  const out = $('messages');
-  out.innerHTML = '';
-  const msgs = db[currentGroup]?.messages || [];
+        function loadMessages() {
+    const out = document.getElementById("messages");
+    out.innerHTML = '';
+    const msgs = db[currentGroup]?.messages || [];
 
-  msgs.forEach(m => {
+    msgs.forEach(m => {
     let text = "";
     let time = "";
 
     if (typeof m === "string") {
-      // old format
-      text = m;
-      time = "";
+        text = m;
     } else {
-      text = m.text;
-      time = m.time ? new Date(m.time).toLocaleString() : "";
+        text = m.text;
+        time = m.time ? new Date(m.time).toLocaleString() : "";
     }
 
     const d = document.createElement('div');
@@ -352,10 +350,25 @@
     d.style.padding = '6px 4px';
     d.style.borderBottom = '1px solid #eee';
     out.appendChild(d);
-  });
+    });
 
-  out.scrollTop = out.scrollHeight;
+
+    out.scrollTop = out.scrollHeight;
 }
+
+    function sendMessage() {
+      let txt = msgBox.value.trim();
+      if (!txt) return;
+
+      db[currentGroup].messages.push({
+        text: txt,
+        time: Date.now()
+      });
+
+      saveGroup();
+
+      msgBox.value = "";
+    }
 
     // small utility
     function escapeHtml(s){
